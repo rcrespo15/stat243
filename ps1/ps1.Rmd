@@ -3,7 +3,7 @@ title: "hw1"
 author: "Ramon Daniel Crespo Chanis"
 date: "9/6/2018"
 SID: 3033083874
-output: html_document
+output: pdf_document
 ---
 
 Problem 3
@@ -210,5 +210,21 @@ mydata
 boxplot(mydata$V6 ~ mydata$V4, xlab = "day in march", ylab = "Maximum temperature (tenths of degrees C)", main = "Max temp vs Day")  
 ```
 
-
+PROBLEM 4
+The objective of this problem is to automatically download all the files
+ending in .txt from the website
+```{bash}
+mkdir -p ~/Desktop/problem4_rc
+cd ~/Desktop/problem4_rc
+curl -L https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ > index
+grep -o 'href.*txt</a>' index > file_list
+grep -o '".*"' file_list > file_list2
+sed 's/^"\(.*\)".*/\1/' file_list2 > file_list3.csv
+var_available=$(grep "" file_list3.csv)
+for item in $var_available
+do
+    echo "Downloading the file $item"
+    curl -O https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/$item.txt
+done
+```
 
