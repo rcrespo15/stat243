@@ -14,14 +14,14 @@ Some concepts that I used in the implementation of this homework are:
 Problem2
 Part a.
 In the csv file each value is stored separately as a ASCII, meaning each value takes a bite. Since each entry is 12 characters long, the size of the file should be 12*1e7. If you add the commas and the occasional legative sign, then the file size would increase to a value close to 133,887,710. 
-The Rda file stores ---
+The Rda file is able to compress the information into a specific file format and use less than a bite per character.
 ```{r setup, include=FALSE}
 n <- 1e7 #10,000,000
 a <- matrix(rnorm(n), ncol = 100) 
 a <- round(a, 10)
 
-write.table(b, file = '/tmp/tmp.csv', quote=FALSE, row.names=FALSE, col.names = FALSE, sep=',')
-save(b, file = '/tmp/tmp.Rda', compress = FALSE)
+write.table(a, file = '/tmp/tmp.csv', quote=FALSE, row.names=FALSE, col.names = FALSE, sep=',')
+save(a, file = '/tmp/tmp.Rda', compress = FALSE)
 file.size('/tmp/tmp.csv') ## [1] 133,887,710 120,000,000
 file.size('/tmp/tmp.Rda') ## [1] 80,000,087
 
@@ -38,7 +38,8 @@ Because you gave the command "numeric", the program only needs to look into wher
 The time needed is less than the scan because even when they are looking for the same entrys, ",", the scan still needs to look up what type of entry it is getting. 
 
 Third Comparison
-Rda is just better. 
+Rda is just better at this task because it the program does not go character by character looking for the pattern that matches. Instead the program already knows where to look, thus making the calculation almost 100 times faster. Rda is just better at this, thus it should be used when possible. 
+
 ```{r}
 ## First comparison
 system.time(a0 <- read.csv('/tmp/tmp.csv', header = FALSE)) 
@@ -64,7 +65,7 @@ system.time(load('/tmp/tmp.Rda'))
 ##   0.076   0.008   0.085
 ```
 Part d
-The matrix format requires a larger space. 
+The number of entries and the size of the numbers is the same for both cases. The difference comes in the information that the compressed .Rda file needs to keep to remember the matrix format. This information ends up making the file many times larger than a file that would just keep the values. 
 
 Problem3
 #Parta. Specify the researcher's name and return the HTML for the researcher's citation page. 
@@ -165,7 +166,13 @@ test_that(
     expect_equal(as.vector(ScottMoura$citations[1]), "480")
   }
 )
+TrevorHastie
+ScottMoura
 
 ```
 
+Problem 4
+Problem 3 is not unethical and it follows good web scraping ethics. The objective of problem 3 is to summarize the information from certain a certain scholar and present this information in an organized manner to the user. Obtaining this information through a webscraper is not unethical because: i) only requires a small amount of information, ii) by being able to perform the task, google is authorizing third parties to do it and iii) the information we obtain from the process is publicly available thus we are not stealing information. An unethical practice would violate one of the above rules. The process we performed could be summarized as rapidly organizing the information that would have taken 10 minutes in less than 30 seconds.
+
+The robot.txt file is an efficient manner of communicating with the robot (scraper computer) and setting friendly terms on the information sharing process. It is a common language for webscrapers. This files contains information regarding specific parts of the webpage that should not be accessed, delays in scrapping etc.  Large companies, like google, will follow the information in this .txt file.   
 
