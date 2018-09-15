@@ -1,0 +1,171 @@
+---
+title: "ps2"
+author: "Ramon Crespo"
+date: "9/12/2018"
+output: pdf_document
+---
+Problem1
+Some concepts that I used in the implementation of this homework are:
+1. version control
+2. good syntax
+
+
+
+Problem2
+Part a.
+In the csv file each value is stored separately as a ASCII, meaning each value takes a bite. Since each entry is 12 characters long, the size of the file should be 12*1e7. If you add the commas and the occasional legative sign, then the file size would increase to a value close to 133,887,710. 
+The Rda file stores ---
+```{r setup, include=FALSE}
+n <- 1e7 #10,000,000
+a <- matrix(rnorm(n), ncol = 100) 
+a <- round(a, 10)
+
+write.table(b, file = '/tmp/tmp.csv', quote=FALSE, row.names=FALSE, col.names = FALSE, sep=',')
+save(b, file = '/tmp/tmp.Rda', compress = FALSE)
+file.size('/tmp/tmp.csv') ## [1] 133,887,710 120,000,000
+file.size('/tmp/tmp.Rda') ## [1] 80,000,087
+
+```
+Part b.
+Because there still needs to be a separator between the rows. In this case the character separating the columns was replaced by a separator of rows.
+
+Part c.
+First Comparison
+Scan looks for a specific entry, in this case ",". It is faster as it does not need to look into each of the characters (1e7 * 12), but instead it just looks for the commas and returns the code that matched the parameter. 
+
+Second Comparison
+Because you gave the command "numeric", the program only needs to look into where the separators are. So what the program is doing is just looking into where the commas are and then whatever matches the search its being assigned the character class. You save the program the time it would have needed to search in the ASCII table the values to then be able to asign them the numeric class.
+The time needed is less than the scan because even when they are looking for the same entrys, ",", the scan still needs to look up what type of entry it is getting. 
+
+Third Comparison
+Rda is just better. 
+```{r}
+## First comparison
+system.time(a0 <- read.csv('/tmp/tmp.csv', header = FALSE)) 
+##    user  system elapsed
+##  35.348   0.248  35.599
+system.time(a1 <- scan('/tmp/tmp.csv', sep = ','))
+##    user  system elapsed
+##   5.236   0.024   5.261
+
+## Second comparison
+system.time(a0 <- read.csv('/tmp/tmp.csv',header = FALSE, colClasses = 'numeric'))
+##    user  system elapsed
+##   5.236   0.044   5.281
+system.time(a1 <- scan('/tmp/tmp.csv', sep = ','))
+##    user  system elapsed
+##   5.256   0.032   5.289
+ 
+## Third comparison
+system.time(a1 <- scan('/tmp/tmp.csv', sep = ',')) ## user system elapsed
+##   5.288   0.020   5.307
+system.time(load('/tmp/tmp.Rda'))
+##    user  system elapsed
+##   0.076   0.008   0.085
+```
+Part d
+The matrix format requires a larger space. 
+
+Problem3
+#Parta. Specify the researcher's name and return the HTML for the researcher's citation page. 
+```{r}
+library(curl)
+library(rvest)
+library(assertthat)
+library(testthat)
+
+researcher_scraper <- function(name){
+  #Step0. Revise for correct input format. Check for type of input and length. 
+  #Input = text
+  #Length = 2. Name and LastName
+  assert_that(is.character(name))
+  
+  name_input <- strsplit(name," ")
+  name_input <- unlist(name_input)
+  stopifnot(length(name_input)==2)
+  
+  #Step1. input researcher's name and obtain the search result information.
+  researcher <- name
+  researcher_name <- regmatches(researcher, regexpr("^.[[:alpha:]]+", researcher))
+  researcher_lastname <- regmatches(researcher, regexpr(" [[:alpha:]]*", researcher))
+  researcher_lastname <-gsub(" ", "", researcher_lastname, fixed = TRUE)
+  URL <- "https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=<name>+<lastname>&btnG="
+  URL <- sub("<name>", researcher_name, URL)
+  URL <- sub("<lastname>",researcher_lastname, URL)
+  html <- read_html(URL)
+  
+  ##Step 2 -> Search for the citation page of the researcher and outputs the html text
+  links <- read_html(URL) %>% html_nodes("a") %>% html_attr('href')
+  link <- links[41]
+  researcher_id <- regmatches(link, regexpr("?=.{12}", link))
+  researcher_id <-gsub("=", "", researcher_id, fixed = TRUE)
+  new_url <- c("https://scholar.google.com", links[41])
+  new_url <- paste(new_url, collapse="")
+  html <- read_html(new_url) 
+  my_list <- list(researcher_id, html,new_url)
+return(my_list)
+}
+
+
+
+researcher_articles <- function(name){
+  #obtain url of citation page for the specified scholar
+  information <- researcher_scraper(name)
+  URL <- information[[3]]
+  
+  #Extract the title of the articles. Its a little verbose, but the different steps makes it clear what exactly is being extracted
+  art_titles <- read_html(URL) %>% html_nodes("a")
+  art_titles_clean <- grep("class=\"gsc_a_at\".*",art_titles, value=TRUE)
+  art_titles_clean <- regmatches(art_titles_clean, regexpr(">(.*)<", art_titles_clean))
+  art_titles_clean <-gsub("<", "", art_titles_clean, fixed = TRUE)
+  art_titles_clean <-gsub(">", "", art_titles_clean, fixed = TRUE)
+  art_titles_clean
+  
+  #Extract the relevant information from the different papers
+  art_info <- read_html(URL) %>% html_nodes("div")
+  art_info <- grep("^<div class=\"gs_gray\".*",art_info, value=TRUE)
+  
+  art_info_authors <- grep("class=\"gs_oph\">",art_info, value=TRUE, invert = TRUE)
+  art_info_authors <- regmatches(art_info_authors, regexpr(">(.*)<", art_info_authors))
+  art_info_authors <-gsub("<", "", art_info_authors, fixed = TRUE)
+  art_info_authors <-gsub(">", "", art_info_authors, fixed = TRUE)
+  art_info_authors
+  
+  art_info_journal <- grep("class=\"gs_oph\">",art_info, value=TRUE)
+  art_info_journal <- regmatches(art_info_journal, regexpr(">(.*)<span", art_info_journal))
+  art_info_journal <-gsub("<span", "", art_info_journal, fixed = TRUE)
+  art_info_journal <-gsub(">", "", art_info_journal, fixed = TRUE)
+  art_info_journal
+  
+  art_info_year <- grep("class=\"gs_oph\">",art_info, value=TRUE)
+  art_info_year <- regmatches(art_info_year, regexpr("<span class=\"gs_oph\">, [[:digit:]]*", art_info_year))
+  art_info_year <-gsub("<span class=\"gs_oph\">, ", "", art_info_year, fixed = TRUE)
+  art_info_year
+  
+  art_info_citations <- read_html(URL) %>% html_nodes("td")
+  art_info_citations <- regmatches(art_info_citations, regexpr("class=\"gsc_a_ac gs_ibl\">[[:digit:]]*", art_info_citations))
+  art_info_citations <-gsub("class=\"gsc_a_ac gs_ibl\">", "", art_info_citations, fixed = TRUE)
+  art_info_citations
+  
+  #Generate and return dataframe
+  d <- data.frame("titles"=art_titles_clean, "authors" = art_info_authors, "journal"=art_info_journal, "year" = art_info_year, "citations" = art_info_citations)
+  return(d)
+}
+
+TrevorHastie <- researcher_articles("Trevor Hastie")
+ScottMoura <- researcher_articles("Scott Moura")
+
+test_that(
+  "Check if first article correspond to online information",
+  {
+    expect_that(as.vector(ScottMoura$titles[1]),equals("A stochastic optimal control approach for power management in plug-in hybrid electric vehicles"))
+    expect_equal(as.vector(ScottMoura$authors[1]),"SJ Moura, HK Fathy, DS Callaway, JL Stein")
+    expect_equal(as.vector(ScottMoura$journal[1]),"IEEE Transactions on control systems technology 19 (3), 545-555")
+    expect_equal(as.vector(ScottMoura$year[1]), "2011")
+    expect_equal(as.vector(ScottMoura$citations[1]), "480")
+  }
+)
+
+```
+
+
