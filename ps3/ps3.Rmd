@@ -5,6 +5,19 @@ date: "9/25/2018"
 output: pdf_document
 ---
 
+Problem 1
+1) The practice to make your code (or experiments and results) as reproducible as possible is compelling. I believe that making your results available to the public as well as necessary procedure, code and all elements to resproduce the experiment will make your work cleaner. When you do things for your eyes only you tend to be more slopy.
+
+2) I am trying to make all my work public. At the moment the homeworks, labs etc. Before uploading everything to github, I spend time cleanning the code and rewriting the code in a reproducible manner. 
+
+3) Researchers have a reputation to maintain. Some researches do not make public their analysis procedures as any mistake could cost them reputation. As long as they dont make the code, data and all relevant information public, then proving a mistake will be extremely hard to prove. 
+
+4) Dividing my current work in two parts: 1) obtaining data and 2) analyzing data. Principles that apply to the first portion of my research relate to the process by which the data was obtained. This includes limitations of the dataset, what is in the dataset, any cleaning process related to the data. The second portion of my research, relates to data analysis. The principles that would apply to this would be making the code, procedure and results available to the public. 
+
+
+
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
