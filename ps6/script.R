@@ -3,7 +3,8 @@ library(parallel)
 library(foreach)
 
 df <- data.frame()
-results <- foreach(i = 0:959)%dopar%{
+t <- system.time({
+results <- foreach(i = 240)%dopar%{
   directory <- ("/global/scratch/paciorek/wikistats_full/dated_for_R/")
   if (i < 10){
     filename <- paste("part-0000",as.character(i),sep="")
@@ -18,4 +19,6 @@ results <- foreach(i = 0:959)%dopar%{
   z <- subset(data, barack == TRUE)
   df <- rbind(df,z)
 }
-save(df,file="data.Rda")
+})
+save(t,file="time.RData")
+save(df,file="data.RData")
