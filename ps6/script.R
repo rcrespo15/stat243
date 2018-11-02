@@ -4,7 +4,7 @@ library(foreach)
 
 df <- data.frame()
 t <- system.time({
-results <- foreach(i = 240)%dopar%{
+results <- foreach(i = 0:240)%dopar%{
   directory <- ("/global/scratch/paciorek/wikistats_full/dated_for_R/")
   if (i < 10){
     filename <- paste("part-0000",as.character(i),sep="")
