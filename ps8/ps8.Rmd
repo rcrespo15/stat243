@@ -2,29 +2,226 @@
 title: "ps8"
 author: "Ramon Crespo"
 date: "11/20/2018"
-output: html_document
+output: pdf_document
 ---
+Note: collaborated with Ugur Yildirim. Initially solved the problem set by myself but due to the complexity of the problem set I collaborated with Ugur, who has a stronger statistical background.
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+Problem1:
+a) 
+
+```{r}
+#define parameters
+#variance 
+sigma <- 1
+#median
+mu <- -4
+#number of samples
+m <- 10000
+
+#Generate samples
+#sample from half normal distribution and correct 
+x <- rnorm(m,mean = -mu,sigma)
+x[x>-4] = -4+(-4-x[x>-4])
+
+#degrees of freedom
+v <- 3
+
+#pdf of t distribution
+f_x <- dt(x,v)/pt(mu,v)
+
+#pdf of half normal distribution
+g_x <- dnorm(x, mu, sigma)/pt(m,v)
+
+w_star <- f_x/g_x
+w <- w_star/sum(w_star)
+plot(x,g_x)
+plot(x,f_x)
+plot(x,w)
+hist(w,seq(0,1,.05))
+exp_f_x= (1/m)*sum(w*x)
+#compute the variance of phi hat
+
+var_phi_hat <- (1/m)*sqrt(sum((exp_f_x-w*x)**2))
+print(exp_f_x)
+print(var_phi_hat)
+help("hist")
 ```
 
-## R Markdown
+Problem 2
+Consider the "helical valley" function. Plot slices of the function to get a sense for how it behaves. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+#Plot x1 and x2 to obtain a sense of how the function varies with respect to the variables x1 and x2
+x1 <- seq(-100, 100, by=5)
+x2 <- seq(-100, 100, by=5)
+x3 <- 1
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+theta <- function(x1,x2) atan2(x2, x1)/(2*pi)
+x <- cbind(x1, x2, x3)
+f <- function(x1,x2) {
+  f1 <- 10*(x3 - 10*theta(x1,x2))
+  f2 <- 10*(sqrt(x1^2 + x2^2) - 1)
+  f3 <- x3
+  return(f1^2 + f2^2 + f3^2)
+}
 
-```{r cars}
-summary(cars)
+t <- sapply(x1,f,x2)
+image(x1,x2,t)
+contour(x1,x2,t)
+persp(x1,x2,t)
 ```
+
+```{r}
+#Plot x1 and x3 to obtain a sense of how the function varies with respect to the variables x1 and x3 by leaving x2 stationary
+x1 <- seq(-100, 100, by=5)
+x2 <- 1
+x3 <- seq(-100, 100, by=5)
+
+theta <- function(x1,x2) atan2(x2, x1)/(2*pi)
+f <- function(x1,x3) {
+  f1 <- 10*(x3 - 10*theta(x1,x2))
+  f2 <- 10*(sqrt(x1^2 + x2^2) - 1)
+  f3 <- x3
+  return(f1^2 + f2^2 + f3^2)
+}
+
+t <- sapply(x1,f,x3)
+image(x1,x3,t)
+contour(x1,x3,t)
+persp(x1,x3,t,theta = 35, phi = 40)
+```
+
+
+```{r}
+#Plot x2 and x3 to obtain a sense of how the function varies with respect to the variables x2 and x3 by leaving x1 stationary
+x1 <- 1
+x2 <- seq(-100, 100, by=5)
+x3 <- seq(-100, 100, by=5)
+
+theta <- function(x1,x2) atan2(x2, x1)/(2*pi)
+f <- function(x2,x3) {
+  f1 <- 10*(x3 - 10*theta(x1,x2))
+  f2 <- 10*(sqrt(x1^2 + x2^2) - 1)
+  f3 <- x3
+  return(f1^2 + f2^2 + f3^2)
+}
+
+t <- sapply(x2,f,x3)
+image(x2,x3,t)
+contour(x2,x3,t)
+persp(x2,x3,t,theta = 70, phi = 40)
+```
+
+Explore the posibility o local minima by ussing different initial values. In the function below I wxplor the posibility of passing different initial values for x1, while leaving the other values x2 and x3 with a constant initial value. From the results we conclude that the algorithm has different results depending on the initial value of x1. The solution does not vary too much (it is in the orther of 1e-5) but the algorithm does find different values for the optimal point depending on the initialization
+
+```{r}
+?optim()
+theta <- function(x1,x2) atan2(x2, x1)/(2*pi)
+
+f <- function(x) {
+  f1 <- 10*(x[3] - 10*theta(x[1],x[2]))
+  f2 <- 10*(sqrt(x[1]^2 + x[2]^2) - 1)
+  f3 <- x[3]
+  return(f1^2 + f2^2 + f3^2)
+}
+
+optimization_values <- function(x1){
+  return(optim(c(x1,1,1),f))
+}
+
+t <- lapply(seq(-10, 10, by=.5),optimization_values)
+t[c(1,20,30)]
+
+```
+
+
+
+
+
 
 ## Including Plots
+Problem 3b
+Given that at this point in the problem we dont really have any further information for the problem I would do some search for convergence by starting B1, B2, B3, B4 with a convinatio of values ranging from -1 to 1. An example could be 1,1,-1,-1
 
-You can also embed plots, for example:
+Problem 3c
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+calculate_EM <- function(data,observation,B_t){
+  classification <- data %*% B_t
+  # Using QR decomposition 
+  QR <- qr(data)
+  Q <- qr.Q(QR)
+  R <- qr.R(QR)
+  #E step
+  E_zi <- ifelse(observation == 1,
+               classification + dnorm(classification)/pnorm(classification),
+               classification - dnorm(-classification)/(pnorm(-classification))
+               )
+  #M step
+  #B_t_1 <- (((t(data)%*%data + lambda*diag(4))^-1)%*%(t(data)%*%E_zi))
+  B_t_1 <- backsolve(R, crossprod(Q, E_zi))
+  return (B_t_1)
+}
+
+#Define some initial value to start the iteration algorithm
+count <- 1
+max_count <- 20
+y <- ifelse(rnorm(1000)<0,0,1)
+data <- matrix(rnorm(1000*4, sd = 10), nrow = 1000, ncol = 4)
+data[,1] <- 1
+data[,2] <- y + rnorm(1000, sd = 5)
+B_t <- c(0,1,0,0)
+
+res <- matrix(data=NA,nrow=20,ncol=4)
+
+#Generate a loop and visualy interpret when convergence is occuring
+while (count < max_count){
+  B_t_1 <- calculate_EM(data,observation = y,B_t)
+  count <- count + 1
+  B_t <- B_t_1
+  res[count-1,] <-B_t
+}
+
+#Plot results for the value of B
+plot(1:20,res[,1], main = "value of B1")
+plot(1:20,res[,2], main = "value of B2")
+plot(1:20,res[,3], main = "value of B3")
+plot(1:20,res[,4], main = "value of B4")
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Problem 3d
+Solve the problem by 
+
+```{r}
+count <- 1
+max_count <- 20
+data <- matrix(rnorm(1000*4, sd = 10), nrow = 1000, ncol = 4)
+data[,1] <- 1
+data[,2] <- y + rnorm(1000, sd = 5)
+
+observation <- ifelse(rnorm(1000)<0,0,1)
+B_t <- c(0,1,0,0)
+
+calculate_BFGS <- function(B_t){
+  classification <- data %*% B_t
+  #Calculate expectation and variance
+  E_zi <- ifelse(observation == 1,
+               classification + dnorm(classification)/pnorm(classification),
+               classification - dnorm(-classification)/(pnorm(-classification))
+               )
+  var_zi <- ifelse(observation==1,
+                   1 - classification * dnorm(classification) / pnorm(classification) - (dnorm(classification) / pnorm(classification))^2,
+                   1 + classification * dnorm(-classification) / pnorm(-classification) - (dnorm(-classification) / pnorm(-classification))^2)
+  
+  #calculate log likelihood
+  #log_liklihood <- -(1/2)*(E_zi%*%E_zi)+ B_t%*%c(1,1,1,1)
+  log_liklihood <- -1/2*sum((E_zi-data%*%B_t)^2)
+  return (-log_liklihood)
+}
+
+optim(par=c(0,1,0,0),calculate_BFGS,method = "BFGS")
+```
+
+
